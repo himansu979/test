@@ -1,0 +1,143 @@
+---
+output: html_document
+---
+# Course Project - Coursera Practical Machine Learning.
+
+Author: Himansu Sahoo
+
+Date : September 25, 2015
+
+```{r}
+getwd() # current working directory
+ls() # list of objects in the environment
+iris_data <- iris
+```
+
+### Project Description
+
+In this project, we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+The dataset is Weight Lifting Exercise Dataset.
+
+The training data for this project are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. 
+
+### Get training and testing dataset
+```{r}
+rawtrain_data <- read.csv("pml-training.csv", na.strings=c("NA", "NAN", ""))
+rawtest_data <- read.csv("pml-testing.csv", na.strings=c("NA", "NAN", ""))
+dim(rawtrain_data)
+dim(rawtest_data)
+```
+
+### Variable Selection
+
+The training dataset contains 19,622 observations and 160 variables. The last variable "classe" is the target variable for our model.
+Most of the columns have lot sof missing values (NA), we will remove those columns while building our model.
+
+```{r}
+train_noNA <- rawtrain_data[ , colSums(is.na(rawtrain_data)) == 0]
+test_noNA <- rawtest_data[ , colSums(is.na(rawtest_data)) == 0]
+dim(train_noNA)
+dim(test_noNA)
+```
+
+The dataset has now 60 variables.
+We will also remove the variables like X, user\_name, timestamp, window which can't be used as predictors.
+
+```{r}
+remove_cols <- grepl("X|user_name|timestamp|window", colnames(train_noNA))
+train_data <- train_noNA[ , !remove_cols]
+test_data <- test_noNA[ , !remove_cols]
+#dim(train_data)
+#dim(test_data)
+```
+
+After variable selection, we are now left with 53 variables in the dataset.
+There are both numeric and integer variables. The last variable "classe" is the target variable. The is a factor variable with 5 levels.
+
+### Explore the training dataset
+```{r}
+dim(train_data)
+names(train_data) # names of the variables
+```
+
+### Explore the Target (dependent) variable
+
+```{r}
+class(train_data$classe) # whether numeric or factor
+str(train_data$classe) # full description
+levels(train_data$classe) # levels of the factor variable
+table(train_data$classe) # statistics of each level
+prop.table(table(train_data$classe))
+```
+
+### Exploratory data analysis
+
+```{r fig.width=3.5, fig.height=3}
+#hist(iris_data$Sepal.Length, breaks=20, xlim=c(4,8))
+#hist(iris_data$Sepal.Width, breaks=15, xlim=c(1.5,4.5), col="red")
+#hist(iris_data$Petal.Length, breaks=20, xlim=c(1,7))
+#hist(iris_data$Petal.Width, breaks=15, xlim=c(0,3), col="blue", xlab="Petal Width", ylab="# of entries", main="Histogram of Petal Width")
+barplot(table(train_data$classe))
+```
+
+### Make box plot 
+
+```{r fig.width=3.5, fig.height=3}
+#boxplot(iris_data$Sepal.Length, ylab="Sepal Length")
+#boxplot(iris_data$Sepal.Width, ylab="Sepal Width", main="Box plot of Sepal.Width")
+#boxplot(iris_data$Petal.Length, ylab="Petal.Length", main="Box plot of Petal.Length", col="red")
+#boxplot(iris_data$Petal.Width, ylab="Petal.Width", main="Box plot of Petal.Width", col="blue")
+```
+
+### Correlation Matrix
+```{r}
+#iris_data[1:3,1:4]
+#cor(iris_data[,1:4])
+#cor(iris_data$Sepal.Length, iris_data$Petal.Length)
+#pairs(iris_data[,1:4], col=iris_data$Species)
+```
+
+### Scatter Plot
+```{r}
+#plot(x=iris_data$Petal.Length, y=iris_data$Petal.Width, col=iris_data$Species)
+library(ggplot2)
+#qplot(Petal.Length, Petal.Width, colour=Species, data=iris_data)
+```
+
+### Make Training and Testing dataset using caret package
+```{r}
+library(caret)
+set.seed(110)
+inTrain <- createDataPartition(y=iris_data$Species, p=0.75, list=FALSE)
+# inTrain is a matrix
+class(inTrain)
+dim(inTrain)
+train_data <- iris_data[inTrain,]
+test_data <- iris_data[-inTrain,]
+```
+
+### Explore the Training and Testing dataset
+```{r}
+dim(train_data)
+cat("train : dimension :  ", dim(train_data) , "\n")
+table(train_data$Species)
+prop.table(table(train_data$Species))
+
+dim(test_data)
+cat("test : dimension :  ", dim(test_data) , "\n")
+table(test_data$Species)
+prop.table(table(test_data$Species))
+
+train_per <- (nrow(train_data)/nrow(iris_data))*100
+test_per <- (nrow(test_data)/nrow(iris_data))*100
+cat("******** training dataset is :  ", train_per, "% \n")
+cat("******** testing dataset is :  ", test_per, "% \n")
+```
+
